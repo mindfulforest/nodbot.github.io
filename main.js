@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeScrollReveal();
     initializeParticles();
     initializeAudio();
+    initializeMobileNavigation();
 });
 
 // 初始化动画效果
@@ -445,6 +446,60 @@ window.addEventListener('resize', function() {
         particleApp.renderer.resize(window.innerWidth, window.innerHeight);
     }
 });
+
+// 初始化移动端导航菜单
+function initializeMobileNavigation() {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', function() {
+            // 切换移动菜单的显示状态
+            const isHidden = mobileMenu.classList.contains('hidden');
+            if (isHidden) {
+                mobileMenu.classList.remove('hidden');
+                // 添加显示动画
+                anime({
+                    targets: '#mobile-menu',
+                    opacity: [0, 1],
+                    translateY: [-20, 0],
+                    duration: 300,
+                    easing: 'easeOutExpo'
+                });
+            } else {
+                // 添加隐藏动画
+                anime({
+                    targets: '#mobile-menu',
+                    opacity: [1, 0],
+                    translateY: [0, -20],
+                    duration: 300,
+                    easing: 'easeInExpo',
+                    complete: function() {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            }
+        });
+
+        // 点击移动菜单中的链接时关闭菜单
+        const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                // 添加隐藏动画
+                anime({
+                    targets: '#mobile-menu',
+                    opacity: [1, 0],
+                    translateY: [0, -20],
+                    duration: 300,
+                    easing: 'easeInExpo',
+                    complete: function() {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    }
+}
 
 // 页面可见性变化处理
 document.addEventListener('visibilitychange', function() {

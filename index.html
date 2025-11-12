@@ -194,7 +194,7 @@
                     <a href="#contact" class="nav-link text-gray-300 hover:text-white px-3 py-2" data-i18n="nav.contact">联系</a>
                 </div>
                 <button id="langToggle" class="text-gray-300 border border-gray-600 px-3 py-1 rounded-md hover:text-white hover:border-gray-400" data-i18n="nav.lang.en">EN</button>
-                <button class="md:hidden text-gray-300">
+                <button id="mobile-menu-button" class="md:hidden text-gray-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
@@ -202,7 +202,15 @@
             </div>
         </div>
     </nav>
-
+    <!-- Mobile menu, show/hide based on menu state. -->
+    <div class="md:hidden" id="mobile-menu">
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <a href="#home" class="nav-link block text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md" data-i18n="nav.home">首页</a>
+            <a href="script.html" class="nav-link block text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md" data-i18n="nav.script">剧本</a>
+            <a href="features.html" class="nav-link block text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md" data-i18n="nav.features">功能</a>
+            <a href="#contact" class="nav-link block text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md" data-i18n="nav.contact">联系</a>
+        </div>
+    </div>
     <!-- Hero Section -->
     <section id="home" class="relative min-h-screen flex items-center justify-center hero-bg">
         <div class="particle-container" id="particles"></div>
