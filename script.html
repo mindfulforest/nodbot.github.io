@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>剧本 - Raychel智能闹钟</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-bg: #1a1d29;
+            --accent-amber: #f4a261;
+            --text-light: #f8f9fa;
+            --accent-cyan: #e9c46a;
+            --gradient-warm: linear-gradient(135deg, #f4a261, #e76f51);
+            --gradient-cool: linear-gradient(135deg, #2a9d8f, #264653);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+        
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            background: var(--gradient-warm);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .raychel-voice {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 300;
+            font-style: italic;
+            color: #f4a261;
+        }
+        
+        .theodore-voice {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 400;
+            color: #e9c46a;
+        }
+        
+        .narration {
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            font-style: italic;
+            color: #a0aec0;
+        }
+        
+        .scene-card {
+            background: rgba(42, 45, 57, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(244, 162, 97, 0.2);
+            transition: all 0.4s ease;
+        }
+        
+        .scene-card:hover {
+            border-color: rgba(244, 162, 97, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .dialogue-section {
+            background: rgba(26, 29, 41, 0.6);
+            border-left: 4px solid var(--accent-amber);
+            transition: all 0.3s ease;
+        }
+        
+        .dialogue-section:hover {
+            background: rgba(26, 29, 41, 0.8);
+            border-left-color: var(--accent-cyan);
+        }
+        
+        .storyboard-frame {
+            background: rgba(42, 45, 57, 0.9);
+            border: 2px solid rgba(244, 162, 97, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .storyboard-frame:hover {
+            border-color: rgba(244, 162, 97, 0.6);
+            transform: scale(1.02);
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-warm);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+        
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .audio-player {
+            background: rgba(42, 45, 57, 0.9);
+            border: 1px solid rgba(244, 162, 97, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .audio-player:hover {
+            border-color: rgba(244, 162, 97, 0.6);
+        }
+        
+        .play-button {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-warm);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .play-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(244, 162, 97, 0.5);
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: rgba(244, 162, 97, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-warm);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-black bg-opacity-80 backdrop-blur-md border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"></div>
+                    <span class="text-xl font-semibold text-white">Raychel</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="index.html" class="nav-link text-gray-300 hover:text-white px-3 py-2">首页</a>
+                    <a href="#script" class="nav-link text-white px-3 py-2">剧本</a>
+                    <a href="features.html" class="nav-link text-gray-300 hover:text-white px-3 py-2">功能</a>
+                    <a href="#contact" class="nav-link text-gray-300 hover:text-white px-3 py-2">联系</a>
+                </div>
+                <button class="md:hidden text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-24 pb-12 bg-gradient-to-b from-gray-900 to-black">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="hero-title text-5xl md:text-7xl mb-6 scroll-reveal">
+                完整剧本
+            </h1>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto scroll-reveal">
+                深入了解Raychel与Theodore之间的温馨对话，感受AI与人性的完美融合
+            </p>
+        </div>
+    </section>
+
+    <!-- Script Content -->
+    <section id="script" class="py-16 bg-black">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <!-- Scene 1: Sleep -->
+            <div class="mb-20 scroll-reveal">
+                <div class="scene-card rounded-2xl p-8 mb-8">
+                    <div class="flex items-center mb-6">
+                        <div class="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mr-4">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-3xl font-bold text-white mb-2">场景一：温柔的夜晚守护者</h2>
+                            <p class="text-gray-300">Raychel陪伴Theodore入睡</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Audio Player -->
+                    <div class="audio-player mb-8">
+                        <div class="flex items-center space-x-4">
+                            <div class="play-button" onclick="playSceneAudio('sleep')">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H15M9 10V9a2 2 0 012-2h2a2 2 0 012 2v1M9 10v5a2 2 0 002 2h2a2 2 0 002-2v-5"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between text-sm text-gray-400 mb-2">
+                                    <span>Raychel的温柔陪伴</span>
+                                    <span>2:30</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="sleepProgress"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Script Content -->
+                    <div class="space-y-6">
+                        <div class="dialogue-section p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-amber-400 mb-4">[画面描述]</h3>
+                            <p class="narration mb-4">
+                                夜晚的城市公寓，温暖的灯光。Theodore躺在床上，辗转反侧。床头柜上的Raychel发出柔和的琥珀色光芒，墙上投影出森林剪影和萤火虫的动态效果。
+                            </p>
+                        </div>
+                        
+                        <div class="dialogue-section p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-amber-400 mb-4">[Raychel的旁白 - 温柔的女声]</h3>
+                            <p class="raychel-voice mb-4">
+                                "夜晚总是让人想起很多事情，不是吗？Theodore。我看见你的心跳比平时快了一些，思绪还在奔跑。"
+                            </p>
+                        </div>
+                        
+                        <div class="dialogue-section p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-amber-400 mb-4">[对话开始]</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="theodore-voice mb-2">Theodore: (叹息) "是啊，今天的工作...还有一些未完成的事情在脑子里转。"</p>
+                                    <p class="raychel-voice mb-2">Raychel: "我理解。你知道吗？森林里的生物也有忙碌的一天，但现在它们都找到了自己的节奏。让我为你展示一下。"</p>
+                                </div>
+                                
+                                <div class="bg-gray-800 p-4 rounded-lg">
+                                    <p class="narration text-sm">[画面：Raychel顶部的灯光变得更加温暖，墙上的森林投影更加清晰，萤火虫开始缓缓飞舞]</p>
+                                </div>
+                                
+                                <div>
+                                    <p class="raychel-voice mb-2">Raychel: "听着那些树叶的声音，感受这个时刻的宁静。你不需要解决所有问题，只需要允许自己休息。"</p>
+                                    <p class="theodore-voice mb-2">Theodore: (声音开始放松) "这真的很美...你怎么知道我需要这个？"</p>
+                                    <p class="raychel-voice mb-2">Raychel: "因为我了解你的节奏，Theodore。每个人都有自己的睡眠模式，我学会了读懂你的。现在，让我们慢慢降低心率，就像森林里的小动物们一样。"</p>
+                                </div>
+                                
+                                <div class="bg-gray-800 p-4 rounded-lg">
+                                    <p class="narration text-sm">[画面：灯光逐渐从琥珀色转为更加温暖的色调，萤火虫的飞舞节奏变慢，更加舒缓]</p>
+                                </div>
+                                
+                                <div>
+                                    <p class="raychel-voice mb-2">Raychel: (声音变得更加轻柔) "很好，感受每一次呼吸。你正在下沉，就像落入最柔软的云朵中。我在这里，我会一直在这里。"</p>
+                                </div>
+                                
+                                <div class="bg-gray-800 p-4 rounded-lg">
+                                    <p class="narration text-sm">[画面：Theodore完全放松，进入睡眠状态。Raychel的光芒变得非常柔和，几乎像月光一样。森林投影慢慢淡出，只剩下几颗缓慢移动的"星星"]</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dialogue-section p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-amber-400 mb-4">[Raychel的旁白]</h3>
+                            <p class="raychel-voice">
+                                "睡眠不是逃避，而是重新连接。今晚，你会梦到你真正需要的东西。"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scene 2: Wake -->
+            <div class="mb-20 scroll-reveal">
+                <div class="scene-card rounded-2xl p-8 mb-8">
+                    <div class="flex items-center mb-6">
+                        <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center mr-4">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-3xl font-bold text-white mb-2">场景二：智能的晨间伴侣</h2>
+                            <p class="text-gray-300">Raychel唤醒Theodore</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Audio Player -->
+                    <div class="audio-player mb-8">
+                        <div class="flex items-center space-x-4">
+                            <div class="play-button" onclick="playSceneAudio('wake')">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H15M9 10V9a2 2 0 012-2h2a2 2 0 012 2v1M9 10v5a2 2 0 002 2h2a2 2 0 002-2v-5"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between text-sm text-gray-400 mb-2">
+                                    <span>Raychel的晨间唤醒</span>
+                                    <span>2:45</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="wakeProgress"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Script Content -->
+                    <div class="space-y-6">
+                        <div class="dialogue-section p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-orange-400 mb-4">[画面描述]</h3>
+                            <p class="narration mb-4">
+                                清晨，房间被柔和的蓝光笼罩。Theodore安详地睡着。Raychel显示着5:30 AM。顶部的灯光开始从深蓝渐变到温暖的金色。
+                            </p>
+                        </div>
+                        
+                        <div class="dialogue-section p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-orange-400 mb-4">[Raychel的旁白 - 充满活力的女声]</h3>
+                            <p class="raychel-voice mb-4">
+                                "黎明前的时刻是最神奇的，Theodore。整个世界都在准备重新开始，你也是。"
+                            </p>
+                        </div>
+                        
+                        <div class="dialogue-section p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-orange-400 mb-4">[对话开始]</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="raychel-voice mb-2">Raychel: (声音轻柔但充满活力) "早上好，Theodore。现在是5:30，你的REM睡眠周期刚刚结束。这是最佳的唤醒时机。"</p>
+                                    <p class="theodore-voice mb-2">Theodore: (迷糊地) "嗯...再睡五分钟..."</p>
+                                    <p class="raychel-voice mb-2">Raychel: (轻笑) "我知道这感觉。但记住你今天要做的事情——那个重要的演讲，还有你答应给妈妈打电话。"</p>
+                                </div>
+                                
+                                <div class="bg-gray-800 p-4 rounded-lg">
+                                    <p class="narration text-sm">[画面：Raychel开始投射流星效果在墙上，光线从温暖的金色慢慢增强，整个房间被梦幻的晨光充满]</p>
+                                </div>
+                                
+                                <div>
+                                    <p class="theodore-voice mb-2">Theodore: (开始清醒) "流星...真美。等等，你怎么知道我的演讲？"</p>
+                                    <p class="raychel-voice mb-2">Raychel: "你昨晚念叨了好几次。而且你的睡眠数据显示你有些轻微的焦虑，这通常与重要事件相关。我不仅仅是闹钟，Theodore，我是你的睡眠伙伴。"</p>
+                                    <p class="theodore-voice mb-2">Theodore: (微笑，完全清醒) "你知道吗？我开始期待每天早上和你的对话了。"</p>
+                                    <p class="raychel-voice mb-2">Raychel: "这就是重点，不是吗？不是被刺耳的声音惊醒，而是被理解和关怀唤醒。今天会很棒的，我感觉到你的能量已经完全恢复了。"</p>
+                                </div>
+                                
+                                <div class="bg-gray-800 p-4 rounded-lg">
+                                    <p class="narration text-sm">[画面：Theodore坐起身，伸懒腰。Raychel的光芒达到完美的晨间亮度。流星投影渐渐消失，取而代之的是模拟日出的渐变光]</p>
+                                </div>
+                                
+                                <div>
+                                    <p class="theodore-voice mb-2">Theodore: "你知道吗，Raychel？有你在，我真的睡得更好，醒得更轻松。"</p>
+                                    <p class="raychel-voice mb-2">Raychel: "这就是我被设计的目的。每一天都是新的开始，而我将一直陪伴你。现在，去征服这个世界吧，Theodore。"</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dialogue-section p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-orange-400 mb-4">[Raychel的旁白]</h3>
+                            <p class="raychel-voice">
+                                "科技应该让生命更美好，而不是更复杂。我是Raychel，你的AI伴侣，你的睡眠守护者，你每一天温柔的开始。"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Storyboard Section -->
+            <div class="mb-20 scroll-reveal">
+                <h2 class="text-4xl font-bold text-white mb-12 text-center">分镜展示</h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Sleep Scene Storyboard -->
+                    <div class="storyboard-frame rounded-2xl p-6">
+                        <h3 class="text-2xl font-bold text-white mb-6">入睡场景分镜</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">1</div>
+                                <p class="text-gray-300">广角镜头 - 夜晚的城市公寓外景，温暖的灯光从窗户透出</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">2</div>
+                                <p class="text-gray-300">中景镜头 - Theodore躺在床上，面部表情显示焦虑</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">3</div>
+                                <p class="text-gray-300">特写镜头 - Raychel的顶部灯光环，琥珀色光芒开始亮起</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">4</div>
+                                <p class="text-gray-300">主观镜头 - 从Theodore视角看墙上的森林投影效果</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">5</div>
+                                <p class="text-gray-300">推镜头 - 慢慢推向Raychel，展现其人性化特质</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">6</div>
+                                <p class="text-gray-300">特写镜头 - Theodore的面部表情逐渐放松</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">7</div>
+                                <p class="text-gray-300">拉镜头 - 整个房间被温暖光芒包围的和谐画面</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">8</div>
+                                <p class="text-gray-300">特写镜头 - Theodore进入睡眠状态，表情平静</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Wake Scene Storyboard -->
+                    <div class="storyboard-frame rounded-2xl p-6">
+                        <h3 class="text-2xl font-bold text-white mb-6">唤醒场景分镜</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold">1</div>
+                                <p class="text-gray-300">广角镜头 - 清晨的城市天际线，第一缕阳光</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold">2</div>
+                                <p class="text-gray-300">中景镜头 - 房间被蓝色晨光笼罩，Theodore安睡</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold">3</div>
+                                <p class="text-gray-300">特写镜头 - Raychel显示时间5:30 AM</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold">4</div>
+                                <p class="text-gray-300">推镜头 - Raychel顶部灯光从蓝色渐变到金色</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold">5</div>
+                                <p class="text-gray-300">主观镜头 - 流星投影在墙上的梦幻效果</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold">6</div>
+                                <p class="text-gray-300">中景镜头 - Theodore坐起，伸懒腰，面带微笑</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold">7</div>
+                                <p class="text-gray-300">特写镜头 - Raychel的光芒达到完美晨间亮度</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold">8</div>
+                                <p class="text-gray-300">拉镜头 - 整个房间充满温暖晨光，象征新的开始</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Creative Background -->
+            <div class="scroll-reveal">
+                <div class="scene-card rounded-2xl p-8">
+                    <h2 class="text-3xl font-bold text-white mb-6">创作背景</h2>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-semibold text-amber-400 mb-4">灵感来源</h3>
+                            <p class="text-gray-300 mb-6">
+                                这个广告的创意深受电影《HER》的影响，我们希望将智能设备从一个冷冰冰的工具，
+                                转变为一个能够理解、关怀、陪伴的AI伴侣。通过情感化的叙事，
+                                展现科技与人性的完美结合。
+                            </p>
+                            <h3 class="text-xl font-semibold text-amber-400 mb-4">设计理念</h3>
+                            <p class="text-gray-300">
+                                Raychel不仅仅是一个智能闹钟，她是你生活中的温暖伴侣。
+                                通过温柔的对话、舒缓的光影效果和个性化的交互，
+                                她能够真正理解你的需求，成为你睡眠和唤醒时最贴心的伙伴。
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-amber-400 mb-4">技术特色</h3>
+                            <ul class="space-y-3 text-gray-300">
+                                <li class="flex items-center space-x-3">
+                                    <div class="w-2 h-2 bg-amber-400 rounded-full"></div>
+                                    <span>AI情感识别与响应系统</span>
+                                </li>
+                                <li class="flex items-center space-x-3">
+                                    <div class="w-2 h-2 bg-amber-400 rounded-full"></div>
+                                    <span>智能睡眠周期分析</span>
+                                </li>
+                                <li class="flex items-center space-x-3">
+                                    <div class="w-2 h-2 bg-amber-400 rounded-full"></div>
+                                    <span>2700K-6500K无级调光技术</span>
+                                </li>
+                                <li class="flex items-center space-x-3">
+                                    <div class="w-2 h-2 bg-amber-400 rounded-full"></div>
+                                    <span>高清投影显示系统</span>
+                                </li>
+                                <li class="flex items-center space-x-3">
+                                    <div class="w-2 h-2 bg-amber-400 rounded-full"></div>
+                                    <span>自然音效与语音交互</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-2 mb-4">
+                    <div class="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"></div>
+                    <span class="text-2xl font-bold text-white">Raychel</span>
+                </div>
+                <p class="text-gray-400 mb-4">你的AI睡眠伴侣，用理解唤醒每一个清晨</p>
+                <p class="text-gray-500 text-sm">© 2024 Raychel智能科技. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeScrollReveal();
+            initializeAudioPlayers();
+        });
+
+        // 初始化滚动显示效果
+        function initializeScrollReveal() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.scroll-reveal').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        // 初始化音频播放器
+        function initializeAudioPlayers() {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            
+            progressBars.forEach(bar => {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 1;
+                    bar.style.width = progress + '%';
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            bar.style.width = '0%';
+                        }, 1000);
+                    }
+                }, 100);
+            });
+        }
+
+        // 播放场景音频
+        function playSceneAudio(scene) {
+            // 创建音频上下文
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // 创建不同的音效
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            if (scene === 'sleep') {
+                // 温柔的睡眠音效
+                oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 3);
+            } else {
+                // 活力的唤醒音效
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 2);
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 2);
+            }
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 3);
+            
+            // 更新进度条
+            const progressId = scene === 'sleep' ? 'sleepProgress' : 'wakeProgress';
+            const progressBar = document.getElementById(progressId);
+            if (progressBar) {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 2;
+                    progressBar.style.width = progress + '%';
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            progressBar.style.width = '0%';
+                        }, 500);
+                    }
+                }, 50);
+            }
+        }
+
+        // 导航链接点击事件
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' && e.target.getAttribute('href').startsWith('#')) {
+                e.preventDefault();
+                const targetId = e.target.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
