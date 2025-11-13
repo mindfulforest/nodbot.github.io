@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeScrollReveal();
     initializeParticles();
     initializeAudio();
+    initializeWelcomeAudio();
     initializeMobileNavigation();
 });
 
@@ -303,6 +304,21 @@ function initializeAudio() {
             } else {
                 playVoiceSample();
             }
+        });
+    });
+}
+
+function initializeWelcomeAudio() {
+    const container = document.getElementById('heroCTA');
+    if (!container) return;
+    const btn = container.querySelector('button');
+    if (!btn) return;
+    const audio = new Audio('./resources/tts_welcome.wav');
+    audio.preload = 'auto';
+    btn.addEventListener('click', function() {
+        audio.currentTime = 0;
+        audio.play().catch(function(err) {
+            console.log('Audio play failed', err);
         });
     });
 }
